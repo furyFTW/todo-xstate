@@ -1,0 +1,10 @@
+export const NEWTODO_CHANGED = 'NEWTODO_CHANGE';
+export const NEWTODO_COMMIT = 'NEWTODO_COMMIT';
+export const TODO_COMMIT = 'TODO_COMMIT';
+export const TODO_DELETE = 'TODO_DELETE';
+export const SHOW_ALL = 'SHOW_ALL';
+export const SHOW_ACTIVE = 'SHOW_ACTIVE';
+export const SHOW_COMPLETED = 'SHOW_COMPLETED';
+export const MARK_COMPLETE = 'MARK_COMPLETE';
+export const MARK_ACTIVE = 'MARK_ACTIVE';
+export const CLEAR_COMPLETED = 'CLEAR_COMPLETED';
