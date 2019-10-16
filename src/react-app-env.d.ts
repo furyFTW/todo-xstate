@@ -1,2 +1,4 @@
 /// <reference types="react-scripts" />
-/// <reference types="classnames" />
+
+declare module 'uuid-v4';
+declare module 'classnames';

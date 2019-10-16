@@ -1,4 +1,3 @@
-
 import uuid from 'uuid-v4';
 import {Todo, Todos} from '../../models/Todo';
 import {Machine, assign, spawn} from 'xstate';
