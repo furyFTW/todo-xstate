@@ -11,25 +11,60 @@ const createTodo = (title: any): Todo => ({
   title: title,
   completed: false,
 });
-const todosInit = {
+
+const onEntryInitState = assign({
+  todos: ctx => {
+    return ctx.todos.map(todo => ({
+      ...todo,
+      ref: spawn(todoState.todoMachine.withContext(todo)),
+    }));
+  },
+});
+const newTodoAction = assign({
+  todo: '',
+  todos: (ctx, e) => {
+    const newTodo = createTodo(e.value.trim());
+    return ctx.todos.concat({
+      ...newTodo,
+      ref: spawn(todoState.todoMachine.withContext(newTodo)),
+    });
+  },
+});
+
+const todoCommitAction = assign({
+  todos: (ctx, e) =>
+    ctx.todos.map(todo => {
+      return todo.id === e.todo.id ? {...todo, ...e.todo, ref: todo.ref} : todo;
+    }),
+});
+const todoDeleteAction = assign({
+  todos: (ctx, e) => ctx.todos.filter(todo => todo.id !== e.id),
+});
+const sendChildrenAction = (type: {type: string}) => ctx => {
+  ctx.todos.forEach((todo: any) => todo.ref.send(type));
+};
+const clearCompletedTodoAction = assign<Todos>({
+  todos: ctx => ctx.todos.filter(todo => !todo.completed),
+});
+
+const newTodoChangedAction = assign({
+  todo: (ctx, e) => e.value,
+});
+
+const newTodoGuard = (ctx, e) => e.value.trim().length;
+
+const todosInitCtx = {
   todo: '',
   todos: [],
 };
 
-export const todosMachine = Machine({
+export const todosMachineConfig = {
   id: 'todos',
-  context: todosInit,
+  context: todosInitCtx,
   initial: todosMainState.initializing_state,
   states: {
     [todosMainState.initializing_state]: {
-      entry: assign({
-        todos: ctx => {
-          return ctx.todos.map(todo => ({
-            ...todo,
-            ref: spawn(todoState.todoMachine.withContext(todo)),
-          }));
-        },
-      }),
+      entry: onEntryInitState,
       on: {
         '': todosMainState.all_state,
       },
@@ -40,70 +75,31 @@ export const todosMachine = Machine({
   },
   on: {
     [todosAction.NEWTODO_CHANGED]: {
-      actions: assign({
-        todo: (ctx, e) => {
-          return e.value;
-        },
-      }),
+      actions: newTodoChangedAction,
     },
     [todosAction.NEWTODO_COMMIT]: {
-      actions: [
-        assign({
-          todo: '',
-          todos: (ctx, e) => {
-            const newTodo = createTodo(e.value.trim());
-            return ctx.todos.concat({
-              ...newTodo,
-              ref: spawn(todoState.todoMachine.withContext(newTodo)),
-            });
-          },
-        }),
-        'persist',
-      ],
-      cond: (ctx, e) => e.value.trim().length,
+      actions: [newTodoAction, 'persist'],
+      cond: newTodoGuard,
     },
     [todosAction.TODO_COMMIT]: {
-      actions: [
-        assign({
-          todos: (ctx, e) =>
-            ctx.todos.map(todo => {
-              return todo.id === e.todo.id
-                ? {...todo, ...e.todo, ref: todo.ref}
-                : todo;
-            }),
-        }),
-        'persist',
-      ],
+      actions: [todoCommitAction, 'persist'],
     },
     [todosAction.TODO_DELETE]: {
-      actions: [
-        assign({
-          todos: (ctx, e) => ctx.todos.filter(todo => todo.id !== e.id),
-        }),
-        'persist',
-      ],
+      actions: [todoDeleteAction, 'persist'],
     },
     [todosAction.SHOW_ALL]: `.${todosMainState.all_state}`,
     [todosAction.SHOW_ACTIVE]: `.${todosMainState.active_state}`,
     [todosAction.SHOW_COMPLETED]: `.${todosMainState.completed_state}`,
     [todosAction.MARK_COMPLETE]: {
-      actions: ctx => {
-        ctx.todos.forEach((todo: any) =>
-          todo.ref.send({type: todoAction.SET_COMPLETE_ACTION}),
-        );
-      },
+      actions: sendChildrenAction({type: todoAction.SET_COMPLETE_ACTION}),
     },
     [todosAction.MARK_ACTIVE]: {
-      actions: ctx => {
-        ctx.todos.forEach((todo: any) =>
-          todo.ref.send({type: todoAction.SET_ACTIVE_ACTION}),
-        );
-      },
+      actions: sendChildrenAction({type: todoAction.SET_ACTIVE_ACTION}),
     },
     [todosAction.CLEAR_COMPLETED]: {
-      actions: assign<Todos>({
-        todos: ctx => ctx.todos.filter(todo => !todo.completed),
-      }),
+      actions: clearCompletedTodoAction,
     },
   },
-});
+};
+
+export const todosStateMachine = Machine<Todos>(todosMachineConfig);

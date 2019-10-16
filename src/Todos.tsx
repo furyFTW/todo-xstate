@@ -19,7 +19,7 @@ function filterTodos(state, todos) {
 
   return todos;
 }
-const persistedTodosMachine = fromTodosMachine.todosMachine.withConfig(
+const persistedTodosMachine = fromTodosMachine.todosStateMachine.withConfig(
   {
     actions: {
       persist: ctx => {
@@ -29,7 +29,7 @@ const persistedTodosMachine = fromTodosMachine.todosMachine.withConfig(
   },
   // initial state from localstorage
   {
-    todo: 'Learn state machines',
+    todo: 'Learn state machine',
     todos: (() => {
       try {
         return JSON.parse(localStorage.getItem('todos-xstate') as string) || [];
@@ -46,7 +46,7 @@ export function Todos() {
   useHashChange(() => {
     send(`SHOW_${window.location.hash.slice(2).toUpperCase() || 'ALL'}`);
   });
-
+  //@ts-ignore
   const {todos, todo} = state.context;
 
   console.log(state);
